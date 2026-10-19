@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { colors, gStyle, images } from '../constants';
 
-function AlbumsHorizontal({ data, heading, tagline }) {
+function AlbumsHorizontal({ data, heading = null, tagline = null }) {
   const navigation = useNavigation();
 
   return (
@@ -44,11 +44,6 @@ function AlbumsHorizontal({ data, heading, tagline }) {
     </View>
   );
 }
-
-AlbumsHorizontal.defaultProps = {
-  heading: null,
-  tagline: null
-};
 
 AlbumsHorizontal.propTypes = {
   // required

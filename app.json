@@ -1,31 +1,72 @@
 {
   "expo": {
-    "name": "Expo Spotify",
+    "name": "Spotify Clone",
     "description": "Spotify: UI Clone with React Native & Expo",
     "scheme": "spotifyclone",
     "slug": "spotifyclone",
-    "privacy": "public",
     "version": "0.5.0",
-    "platforms": ["android", "ios", "web"],
-    "githubUrl": "https://github.com/calebnance/expo-spotify",
+    "platforms": [
+      "android",
+      "ios",
+      "web"
+    ],
     "orientation": "portrait",
     "primaryColor": "#181414",
     "icon": "src/assets/icon.png",
-    "splash": {
-      "backgroundColor": "#181414",
-      "image": "src/assets/splash.png",
-      "resizeMode": "contain"
-    },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "android": {
-      "versionCode": 50
+      "versionCode": 50,
+      "package": "com.example.spotifyclone"
     },
     "ios": {
       "buildNumber": "0.5.0",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ],
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true,
+          "NSAllowsLocalNetworking": true
+        }
+      },
+      "bundleIdentifier": "com.example.spotifyclone"
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#181414",
+          "image": "src/assets/splash.png",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false
+        }
+      ],
+      "expo-asset",
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true,
+            "buildArchs": [
+              "arm64-v8a"
+            ],
+            "useLegacyPackaging": true
+          }
+        }
+      ]
+    ],
+    "userInterfaceStyle": "dark",
+    "extra": {
+      "serverUrl": "http://192.168.100.184:8765"
     }
   }
 }

@@ -1,3 +1,46 @@
+# Spotify Clone (Expo) — playable, with playlists & downloads
+
+Built on top of [calebnance/expo-spotify](https://github.com/calebnance/expo-spotify)
+(original README below). This fork upgrades it to **Expo SDK 57** and turns the
+UI clone into a working offline music player:
+
+- **Playlists** — create, rename, delete, add/remove songs, plus *Liked Songs*
+  and *Downloaded songs*.
+- **Playback** — real audio (expo-audio): play/pause, seek, next/previous,
+  shuffle, repeat (all / one), play next, background & lock-screen playback.
+- **Add music**
+  - **Search YouTube** in the Search tab and tap a result to download it.
+  - **Paste a YouTube link** (or any site yt-dlp supports) into Search.
+  - **Paste a direct `.mp3`/`.m4a` link**: downloads straight to the phone, no server needed.
+  - **Import from phone**: pick audio files already on the device.
+  - **Import a Spotify playlist/album**: paste its link; a playlist is created
+    and every song is found on YouTube and downloaded one by one (resumes if
+    the app closes; first 100 tracks unless you add Spotify API keys, see
+    [server/README.md](server/README.md)).
+
+Songs are saved on the device (`documentDirectory/music`), so they play offline.
+
+## Run it
+
+```bash
+npm install
+npm run server      # terminal 1: YouTube download server (needs python3 + ffmpeg)
+npx expo start      # terminal 2: scan the QR code with Expo Go
+```
+
+The phone and computer must be on the same Wi-Fi. The app guesses the server
+address from the Expo dev server; if search says it can't reach the server,
+open **Settings** (cog on Home) and enter the URL `npm run server` prints,
+e.g. `http://192.168.1.23:8765`. See [server/README.md](server/README.md).
+
+YouTube search and link downloads need that server running on your computer,
+because yt-dlp can't run on the phone. Songs you've already downloaded play
+without it. Downloads don't work in the web build.
+
+> Only download music you have the rights to.
+
+---
+
 # Spotify: UI Clone with React Native / Expo
 
 web demo: [Expo Spotify](https://expo-spotify.vercel.app)

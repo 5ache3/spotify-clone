@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '../constants';
 
-function SvgTabHome({ active, size }) {
+function SvgTabHome({ active = false, size = 24 }) {
   const fill = active ? colors.white : colors.greyInactive;
   const dPath = active
     ? 'M448 463.746H298.667V314.413h-85.334v149.333H64V148.318L256 36.572l192 110.984v316.19z'
@@ -15,11 +15,6 @@ function SvgTabHome({ active, size }) {
     </Svg>
   );
 }
-
-SvgTabHome.defaultProps = {
-  active: false,
-  size: 24
-};
 
 SvgTabHome.propTypes = {
   // optional

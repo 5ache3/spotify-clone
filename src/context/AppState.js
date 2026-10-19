@@ -9,13 +9,6 @@ class AppState extends React.Component {
     super();
 
     this.state = {
-      currentSongData: {
-        album: 'Swimming',
-        artist: 'Mac Miller',
-        image: 'swimming',
-        length: 312,
-        title: 'So It Goes'
-      },
       isLoading: true,
       showMusicBar: true
     };
@@ -33,12 +26,11 @@ class AppState extends React.Component {
     const { children } = this.props;
 
     // app state
-    const { currentSongData, isLoading, showMusicBar } = this.state;
+    const { isLoading, showMusicBar } = this.state;
 
     return (
       <Context.Provider
         value={{
-          currentSongData,
           isLoading,
           showMusicBar,
           updateState: this.updateState

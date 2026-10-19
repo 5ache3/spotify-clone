@@ -4,7 +4,12 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { colors, gStyle } from '../constants';
 
-function LineItemSong({ active, downloaded, onPress, songData }) {
+function LineItemSong({
+  active = false,
+  downloaded = false,
+  onPress,
+  songData
+}) {
   const activeColor = active ? colors.brandPrimary : colors.white;
 
   return (
@@ -33,11 +38,6 @@ function LineItemSong({ active, downloaded, onPress, songData }) {
     </View>
   );
 }
-
-LineItemSong.defaultProps = {
-  active: false,
-  downloaded: false
-};
 
 LineItemSong.propTypes = {
   // required

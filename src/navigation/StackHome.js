@@ -2,6 +2,7 @@ import * as React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 // screens
+import PlaylistScreen from '../screens/Playlist';
 import HomeScreen from '../screens/Home';
 import AlbumScreen from '../screens/Album';
 
@@ -24,6 +25,13 @@ function StackHome() {
           headerShown: false
         }}
         initialParams={{ title: 'Extraordinary Machine' }}
+      />
+      <Stack.Screen
+        name="Playlist"
+        component={PlaylistScreen}
+        options={{
+          headerShown: false
+        }}
       />
     </Stack.Navigator>
   );

@@ -1,33 +1,61 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Feather, FontAwesome, MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors, device, func, gStyle, images } from '../constants';
+import { colors, device, func, gStyle } from '../constants';
 
 // components
+import Artwork from '../components/Artwork';
 import ModalHeader from '../components/ModalHeader';
 import TouchIcon from '../components/TouchIcon';
 
 // context
-import Context from '../context';
+import { useLibrary } from '../context/LibraryState';
+import { usePlayer, usePlayerStatus } from '../context/PlayerState';
 
-function ModalMusicPlayer(props) {
-  // get main app state
-  const { currentSongData } = React.useContext(Context);
+function ModalMusicPlayer({ navigation }) {
+  const { toggleLike } = useLibrary();
+  const {
+    currentSong,
+    cycleRepeat,
+    next,
+    previous,
+    repeat,
+    seekTo,
+    shuffle,
+    sourceName,
+    togglePlay,
+    toggleShuffle
+  } = usePlayer();
+  const status = usePlayerStatus();
 
-  // local state
-  const [favorited, setFavorited] = React.useState(false);
-  const [paused, setPaused] = React.useState(true);
+  // while dragging the slider, show the dragged position
+  const [seeking, setSeeking] = React.useState(null);
 
-  const { navigation } = props;
+  if (!currentSong) {
+    return (
+      <View style={[gStyle.container, gStyle.flexCenter]}>
+        <Text style={styles.artist}>Nothing playing</Text>
+        <View style={gStyle.spacer2} />
+        <TouchIcon
+          icon={<Feather color={colors.greyLight} name="chevron-down" />}
+          onPress={() => navigation.goBack(null)}
+        />
+      </View>
+    );
+  }
 
   // ui state
-  const favoriteColor = favorited ? colors.brandPrimary : colors.white;
-  const favoriteIcon = favorited ? 'heart' : 'heart-o';
-  const iconPlay = paused ? 'play-circle' : 'pause-circle';
-  const timePast = func.formatTime(0);
-  const timeLeft = func.formatTime(currentSongData.length);
+  const favoriteColor = currentSong.liked ? colors.brandPrimary : colors.white;
+  const favoriteIcon = currentSong.liked ? 'heart' : 'heart-o';
+  const iconPlay = status.playing ? 'pause-circle' : 'play-circle';
+  const duration = status.duration || currentSong.duration || 0;
+  const position = seeking ?? status.currentTime;
+  const timePast = func.formatTime(position);
+  const timeLeft = func.formatTime(Math.max(duration - position, 0));
+  const shuffleColor = shuffle ? colors.brandPrimary : colors.greyLight;
+  const repeatColor = repeat !== 'off' ? colors.brandPrimary : colors.greyLight;
 
   return (
     <View style={gStyle.container}>
@@ -35,33 +63,49 @@ function ModalMusicPlayer(props) {
         left={<Feather color={colors.greyLight} name="chevron-down" />}
         leftPress={() => navigation.goBack(null)}
         right={<Feather color={colors.greyLight} name="more-horizontal" />}
-        text={currentSongData.album}
+        rightPress={() =>
+          navigation.navigate('ModalSongOptions', { songId: currentSong.id })
+        }
+        text={sourceName || 'Now playing'}
       />
 
       <View style={gStyle.p3}>
-        <Image source={images[currentSongData.image]} style={styles.image} />
+        <Artwork
+          artwork={currentSong.artwork}
+          size={device.width - 48}
+          style={styles.image}
+        />
 
         <View style={[gStyle.flexRowSpace, styles.containerDetails]}>
           <View style={styles.containerSong}>
             <Text ellipsizeMode="tail" numberOfLines={1} style={styles.song}>
-              {currentSongData.title}
+              {currentSong.title}
             </Text>
-            <Text style={styles.artist}>{currentSongData.artist}</Text>
+            <Text ellipsizeMode="tail" numberOfLines={1} style={styles.artist}>
+              {currentSong.artist}
+            </Text>
           </View>
           <View style={styles.containerFavorite}>
             <TouchIcon
               icon={<FontAwesome color={favoriteColor} name={favoriteIcon} />}
-              onPress={() => setFavorited(!favorited)}
+              onPress={() => toggleLike(currentSong.id)}
             />
           </View>
         </View>
 
         <View style={styles.containerVolume}>
           <Slider
-            minimumValue={0}
-            maximumValue={currentSongData.length}
-            minimumTrackTintColor={colors.white}
             maximumTrackTintColor={colors.grey3}
+            maximumValue={duration || 1}
+            minimumTrackTintColor={colors.white}
+            minimumValue={0}
+            onSlidingComplete={async (value) => {
+              await seekTo(value);
+              setSeeking(null);
+            }}
+            onValueChange={setSeeking}
+            thumbTintColor={colors.white}
+            value={position}
           />
           <View style={styles.containerTime}>
             <Text style={styles.time}>{timePast}</Text>
@@ -71,44 +115,48 @@ function ModalMusicPlayer(props) {
 
         <View style={styles.containerControls}>
           <TouchIcon
-            icon={<Feather color={colors.greyLight} name="shuffle" />}
-            onPress={() => null}
+            icon={<Feather color={shuffleColor} name="shuffle" />}
+            onPress={toggleShuffle}
           />
           <View style={gStyle.flexRowCenterAlign}>
             <TouchIcon
               icon={<FontAwesome color={colors.white} name="step-backward" />}
               iconSize={32}
-              onPress={() => null}
+              onPress={previous}
             />
             <View style={gStyle.pH3}>
               <TouchIcon
                 icon={<FontAwesome color={colors.white} name={iconPlay} />}
                 iconSize={64}
-                onPress={() => setPaused(!paused)}
+                onPress={togglePlay}
               />
             </View>
             <TouchIcon
               icon={<FontAwesome color={colors.white} name="step-forward" />}
               iconSize={32}
-              onPress={() => null}
+              onPress={next}
             />
           </View>
-          <TouchIcon
-            icon={<Feather color={colors.greyLight} name="repeat" />}
-            onPress={() => null}
-          />
+          <View>
+            <TouchIcon
+              icon={<Feather color={repeatColor} name="repeat" />}
+              onPress={cycleRepeat}
+            />
+            {repeat === 'one' && <Text style={styles.repeatOne}>1</Text>}
+          </View>
         </View>
 
         <View style={styles.containerBottom}>
-          <TouchIcon
-            icon={<Feather color={colors.greyLight} name="speaker" />}
-            onPress={() => null}
-          />
+          <View />
           <TouchIcon
             icon={
-              <MaterialIcons color={colors.greyLight} name="playlist-play" />
+              <MaterialIcons color={colors.greyLight} name="playlist-add" />
             }
-            onPress={() => null}
+            onPress={() =>
+              navigation.navigate('ModalAddToPlaylist', {
+                songId: currentSong.id
+              })
+            }
           />
         </View>
       </View>
@@ -123,9 +171,7 @@ ModalMusicPlayer.propTypes = {
 
 const styles = StyleSheet.create({
   image: {
-    height: device.width - 48,
-    marginVertical: device.iPhoneNotch ? 36 : 8,
-    width: device.width - 48
+    marginVertical: device.iPhoneNotch ? 36 : 8
   },
   containerDetails: {
     marginBottom: 16
@@ -156,6 +202,14 @@ const styles = StyleSheet.create({
   containerControls: {
     ...gStyle.flexRowSpace,
     marginTop: device.iPhoneNotch ? 24 : 8
+  },
+  repeatOne: {
+    ...gStyle.textSpotifyBold12,
+    color: colors.brandPrimary,
+    fontSize: 9,
+    position: 'absolute',
+    right: -8,
+    top: -6
   },
   containerBottom: {
     ...gStyle.flexRowSpace,

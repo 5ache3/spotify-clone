@@ -42,8 +42,13 @@ const formatTime = (sec) => {
   return `${padTime(minutes, 1)}:${padTime(seconds, 2)}`;
 };
 
+// "1 song", "2 songs"
+// /////////////////////////////////////////////////////////////////////////////
+const plural = (count, word) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 export default {
   cacheFonts,
+  plural,
   cacheImages,
   loadAssetsAsync,
   formatTime

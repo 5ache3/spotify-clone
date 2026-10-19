@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { TouchableOpacity } from 'react-native';
 import { gStyle } from '../constants';
 
-function TouchIcon({ icon, iconSize, onPress, style }) {
+function TouchIcon({ icon, iconSize = 24, onPress, style = {} }) {
   return (
     <TouchableOpacity
       activeOpacity={gStyle.activeOpacity}
@@ -15,11 +15,6 @@ function TouchIcon({ icon, iconSize, onPress, style }) {
     </TouchableOpacity>
   );
 }
-
-TouchIcon.defaultProps = {
-  iconSize: 24,
-  style: {}
-};
 
 TouchIcon.propTypes = {
   // required

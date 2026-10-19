@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Svg, { Path } from 'react-native-svg';
 import { colors } from '../constants';
 
-function SvgSearch({ fill, size }) {
+function SvgSearch({ fill = colors.blackBg, size = 24 }) {
   return (
     <Svg height={size} width={size} viewBox="0 0 512 512">
       <Path
@@ -14,11 +14,6 @@ function SvgSearch({ fill, size }) {
     </Svg>
   );
 }
-
-SvgSearch.defaultProps = {
-  fill: colors.blackBg,
-  size: 24
-};
 
 SvgSearch.propTypes = {
   // optional

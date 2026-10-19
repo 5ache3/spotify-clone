@@ -29,12 +29,11 @@ function Album({ navigation, route }) {
   const { title } = route.params;
 
   // get main app state
-  const { currentSongData, showMusicBar, updateState } =
-    React.useContext(Context);
+  const { showMusicBar, updateState } = React.useContext(Context);
 
   // local state
   const [downloaded, setDownloaded] = React.useState(false);
-  const [song, setSong] = React.useState(currentSongData.title);
+  const [song, setSong] = React.useState(null);
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
   // ui state
@@ -69,12 +68,13 @@ function Album({ navigation, route }) {
     }
   };
 
+  // demo albums have no audio: look the track up to download it
   const onChangeSong = (songData) => {
-    // update local state
     setSong(songData.title);
-
-    // update main state
-    updateState('currentSongData', songData);
+    navigation.navigate('StackSearch', {
+      params: { query: `${songData.artist} ${songData.title}` },
+      screen: 'Search'
+    });
   };
 
   // album data not set?

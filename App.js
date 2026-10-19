@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { StatusBar } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { func } from './src/constants';
 
 // root stack navigation
@@ -8,6 +9,8 @@ import RootStack from './src/navigation/RootStack';
 
 // app context state
 import AppState from './src/context/AppState';
+import LibraryState from './src/context/LibraryState';
+import PlayerState from './src/context/PlayerState';
 
 function App() {
   const [isLoading, setIsLoading] = React.useState(true);
@@ -47,11 +50,17 @@ function App() {
   }
 
   return (
-    <AppState>
-      <StatusBar barStyle="light-content" />
+    <SafeAreaProvider>
+      <AppState>
+        <LibraryState>
+          <PlayerState>
+            <StatusBar barStyle="light-content" />
 
-      <RootStack />
-    </AppState>
+            <RootStack />
+          </PlayerState>
+        </LibraryState>
+      </AppState>
+    </SafeAreaProvider>
   );
 }
 

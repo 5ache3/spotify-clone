@@ -9,17 +9,19 @@ import { colors, device, gStyle } from '../constants';
 // components
 import TouchIcon from './TouchIcon';
 
-function ScreenHeader({ showBack, title }) {
+function ScreenHeader({ right = null, showBack = false, title }) {
   const navigation = useNavigation();
 
   return (
     <BlurView tint="dark" intensity={95} style={styles.container}>
-      {showBack && (
+      {(showBack || right) && (
         <View style={styles.left}>
-          <TouchIcon
-            icon={<Feather color={colors.white} name="chevron-left" />}
-            onPress={() => navigation.goBack(null)}
-          />
+          {showBack && (
+            <TouchIcon
+              icon={<Feather color={colors.white} name="chevron-left" />}
+              onPress={() => navigation.goBack(null)}
+            />
+          )}
         </View>
       )}
 
@@ -27,20 +29,17 @@ function ScreenHeader({ showBack, title }) {
         <Text style={styles.text}>{title}</Text>
       </View>
 
-      {showBack && <View style={gStyle.flex1} />}
+      {(showBack || right) && <View style={styles.right}>{right}</View>}
     </BlurView>
   );
 }
-
-ScreenHeader.defaultProps = {
-  showBack: false
-};
 
 ScreenHeader.propTypes = {
   // required
   title: PropTypes.string.isRequired,
 
   // optional
+  right: PropTypes.element,
   showBack: PropTypes.bool
 };
 
@@ -66,6 +65,10 @@ const styles = StyleSheet.create({
   left: {
     ...gStyle.flex1,
     alignItems: 'flex-start'
+  },
+  right: {
+    ...gStyle.flex1,
+    alignItems: 'flex-end'
   }
 });
 

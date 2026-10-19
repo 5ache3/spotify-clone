@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 import { colors } from '../constants';
 
-function SvgLinearGradient({ fill, height }) {
+function SvgLinearGradient({ fill = colors.brandPrimary, height = 320 }) {
   return (
     <Svg height={height} width="100%">
       <Defs>
@@ -17,11 +17,6 @@ function SvgLinearGradient({ fill, height }) {
     </Svg>
   );
 }
-
-SvgLinearGradient.defaultProps = {
-  fill: colors.brandPrimary,
-  height: 320
-};
 
 SvgLinearGradient.propTypes = {
   // optional

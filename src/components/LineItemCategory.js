@@ -14,8 +14,8 @@ function LineItemCategory({
   icon,
   onPress,
   title,
-  disableRightSide,
-  iconLibrary
+  disableRightSide = null,
+  iconLibrary = 'Feather'
 }) {
   let iconDisplay;
 
@@ -71,11 +71,6 @@ function LineItemCategory({
     </TouchableOpacity>
   );
 }
-
-LineItemCategory.defaultProps = {
-  disableRightSide: null,
-  iconLibrary: 'Feather'
-};
 
 LineItemCategory.propTypes = {
   // required

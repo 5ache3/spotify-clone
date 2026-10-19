@@ -6,7 +6,14 @@ import { colors, device, gStyle } from '../constants';
 // components
 import TouchIcon from './TouchIcon';
 
-function ModalHeader({ left, leftPress, right, rightPress, style, text }) {
+function ModalHeader({
+  left = null,
+  leftPress = () => null,
+  right = null,
+  rightPress = () => null,
+  style = {},
+  text = null
+}) {
   return (
     <View style={[styles.container, style]}>
       {left && (
@@ -27,15 +34,6 @@ function ModalHeader({ left, leftPress, right, rightPress, style, text }) {
     </View>
   );
 }
-
-ModalHeader.defaultProps = {
-  left: null,
-  leftPress: () => null,
-  right: null,
-  rightPress: () => null,
-  style: {},
-  text: null
-};
 
 ModalHeader.propTypes = {
   // optional

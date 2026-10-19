@@ -1,7 +1,8 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, device, gStyle } from '../constants';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, gStyle } from '../constants';
 
 // components
 import BarMusicPlayer from './BarMusicPlayer';
@@ -12,7 +13,8 @@ import Context from '../context';
 // https://reactnavigation.org/docs/5.x/bottom-tab-navigator/#tabbar
 function CustomTabBar({ descriptors, navigation, state }) {
   // get main app state
-  const { currentSongData, showMusicBar } = React.useContext(Context);
+  const { showMusicBar } = React.useContext(Context);
+  const insets = useSafeAreaInsets();
 
   const focusedOptions = descriptors[state.routes[state.index].key].options;
 
@@ -22,9 +24,14 @@ function CustomTabBar({ descriptors, navigation, state }) {
 
   return (
     <React.Fragment>
-      {showMusicBar && <BarMusicPlayer song={currentSongData} />}
+      {showMusicBar && <BarMusicPlayer />}
 
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          { paddingBottom: Math.max(insets.bottom, 12) }
+        ]}
+      >
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
 
@@ -69,7 +76,7 @@ function CustomTabBar({ descriptors, navigation, state }) {
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={options.tabBarAccessibilityLabel}
               activeOpacity={gStyle.activeOpacity}
-              testID={options.tabBarTestID}
+              testID={options.tabBarButtonTestID}
               onPress={onPress}
               onLongPress={onLongPress}
               style={styles.containerTab}
@@ -95,7 +102,6 @@ const styles = StyleSheet.create({
   container: {
     ...gStyle.flexRowCenterAlign,
     backgroundColor: colors.grey,
-    paddingBottom: device.iPhoneNotch ? 24 : 16,
     paddingTop: 12
   },
   containerTab: {

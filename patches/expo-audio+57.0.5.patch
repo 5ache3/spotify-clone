@@ -1,0 +1,162 @@
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+index c76a9fd..cae7bc9 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/AudioPlayer.kt
+@@ -23,6 +23,7 @@ import expo.modules.kotlin.exception.Exceptions
+ import java.lang.ref.WeakReference
+ 
+ private const val PLAYBACK_STATUS_UPDATE = "playbackStatusUpdate"
++private const val REMOTE_COMMAND = "remoteCommand"
+ private const val AUDIO_SAMPLE_UPDATE = "audioSampleUpdate"
+ private const val SEEK_JUMP_INTERVAL_MS: Long = 10_000
+ 
+@@ -97,6 +98,11 @@ class AudioPlayer(
+     startUpdating()
+   }
+ 
++  // [spotify-clone patch] notification / headset "next" and "previous"
++  fun emitRemoteCommand(command: String) {
++    emit(REMOTE_COMMAND, mapOf("command" to command))
++  }
++
+   fun setActiveForLockScreen(active: Boolean, metadata: Metadata? = null, options: AudioLockScreenOptions? = null) {
+     if (active) {
+       this.metadata = metadata
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+index 196a5d5..2e9cbde 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioControlsService.kt
+@@ -90,6 +90,8 @@ class AudioControlsService : MediaSessionService() {
+ 
+         ACTION_SEEK_FORWARD -> currentPlayerRef.seekTo(currentPlayerRef.currentPosition + SEEK_INTERVAL_MS)
+         ACTION_SEEK_BACKWARD -> currentPlayerRef.seekTo(currentPlayerRef.currentPosition - SEEK_INTERVAL_MS)
++        ACTION_NEXT -> currentPlayer?.emitRemoteCommand("next")
++        ACTION_PREVIOUS -> currentPlayer?.emitRemoteCommand("previous")
+       }
+     }
+ 
+@@ -192,6 +194,17 @@ class AudioControlsService : MediaSessionService() {
+       val compactViewIndices = mutableListOf<Int>()
+       var currentIndex = 0
+ 
++      // [spotify-clone patch]
++      builder.addAction(
++        NotificationCompat.Action(
++          androidx.media3.session.R.drawable.media3_icon_previous,
++          "Previous",
++          buildActionPendingIntent(ACTION_PREVIOUS)
++        )
++      )
++      compactViewIndices.add(currentIndex)
++      currentIndex++
++
+       if (currentOptions?.showSeekBackward == true) {
+         builder.addAction(
+           NotificationCompat.Action(
+@@ -227,8 +240,19 @@ class AudioControlsService : MediaSessionService() {
+           )
+         )
+         compactViewIndices.add(currentIndex)
++        currentIndex++
+       }
+ 
++      // [spotify-clone patch]
++      builder.addAction(
++        NotificationCompat.Action(
++          androidx.media3.session.R.drawable.media3_icon_next,
++          "Next",
++          buildActionPendingIntent(ACTION_NEXT)
++        )
++      )
++      compactViewIndices.add(currentIndex)
++
+       style.setShowActionsInCompactView(*compactViewIndices.toIntArray())
+     }
+ 
+@@ -322,16 +346,36 @@ class AudioControlsService : MediaSessionService() {
+ 
+   private fun resolveSessionPlayer(player: AudioPlayer, options: AudioLockScreenOptions?): Player {
+     val isLive = options?.isLiveStream ?: player.isLive
+-    if (!isLive) {
+-      return player.ref
+-    }
+ 
++    // [spotify-clone patch] the app keeps its own queue: expose next/previous
++    // to the notification, lock screen and headset buttons, and hand them to JS
+     return object : ForwardingPlayer(player.ref) {
++      private val trackCommands = listOf(
++        Player.COMMAND_SEEK_TO_NEXT,
++        Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM,
++        Player.COMMAND_SEEK_TO_PREVIOUS,
++        Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM
++      )
++
+       override fun getAvailableCommands(): Player.Commands {
+-        return super.getAvailableCommands().buildUpon()
+-          .remove(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+-          .build()
++        val builder = super.getAvailableCommands().buildUpon()
++        trackCommands.forEach { builder.add(it) }
++        if (isLive) {
++          builder.remove(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
++        }
++        return builder.build()
+       }
++
++      override fun isCommandAvailable(command: Int): Boolean =
++        command in trackCommands || super.isCommandAvailable(command)
++
++      override fun hasNextMediaItem(): Boolean = true
++      override fun hasPreviousMediaItem(): Boolean = true
++
++      override fun seekToNext() = player.emitRemoteCommand("next")
++      override fun seekToNextMediaItem() = player.emitRemoteCommand("next")
++      override fun seekToPrevious() = player.emitRemoteCommand("previous")
++      override fun seekToPreviousMediaItem() = player.emitRemoteCommand("previous")
+     }
+   }
+ 
+@@ -402,6 +446,12 @@ class AudioControlsService : MediaSessionService() {
+     }
+     currentMetadata = metadata
+     sessionMetadataPlayer?.updateMetadata(metadata)
++    // [spotify-clone patch] a song without artwork shouldn't keep the last cover
++    if (metadata?.artworkUrl == null) {
++      artworkLoadJob?.cancel()
++      currentArtwork = null
++      currentArtworkUrl = null
++    }
+     currentMetadata?.artworkUrl?.let {
+       loadArtworkFromUrl(it) { bitmap ->
+         currentArtwork = bitmap
+@@ -558,6 +608,8 @@ class AudioControlsService : MediaSessionService() {
+ 
+     const val ACTION_SEEK_FORWARD = "expo.modules.audio.action.SEEK_FORWARD"
+     const val ACTION_SEEK_BACKWARD = "expo.modules.audio.action.SEEK_BACKWARD"
++    const val ACTION_NEXT = "expo.modules.audio.action.NEXT"
++    const val ACTION_PREVIOUS = "expo.modules.audio.action.PREVIOUS"
+ 
+     const val SEEK_INTERVAL_MS = 10000L
+   }
+diff --git a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
+index 839aaef..1db1740 100644
+--- a/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
++++ b/node_modules/expo-audio/android/src/main/java/expo/modules/audio/service/AudioMediaSessionCallback.kt
+@@ -24,11 +24,12 @@ class AudioMediaSessionCallback : MediaSession.Callback {
+             .add(Player.COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM)
+             .add(Player.COMMAND_SEEK_FORWARD)
+             .add(Player.COMMAND_SEEK_BACK)
+-            // Remove track navigation commands
+-            .remove(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
+-            .remove(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+-            .remove(Player.COMMAND_SEEK_TO_PREVIOUS)
+-            .remove(Player.COMMAND_SEEK_TO_NEXT)
++            // [spotify-clone patch] keep track navigation; the session player
++            // forwards it to JS as "remoteCommand" events
++            .add(Player.COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
++            .add(Player.COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
++            .add(Player.COMMAND_SEEK_TO_PREVIOUS)
++            .add(Player.COMMAND_SEEK_TO_NEXT)
+             .build()
+         )
+         .setAvailableSessionCommands(

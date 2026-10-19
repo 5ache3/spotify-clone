@@ -1,4 +1,4 @@
-import { Dimensions, Platform } from 'react-native';
+import { Dimensions, Platform, StatusBar } from 'react-native';
 
 // android
 const android = Platform.OS === 'android';
@@ -18,9 +18,14 @@ let iPhoneNotch = false;
 if (iOS) {
   // iphone screen breakdown
   // https://blog.calebnance.com/development/iphone-ipad-pixel-sizes-guide-complete-list.html
-  if (height === 812 || height === 844 || height === 896 || height === 926) {
+  if (height >= 812) {
     iPhoneNotch = true;
   }
+}
+
+// tall android status bars (punch-hole cameras) need the same extra space
+if (android && StatusBar.currentHeight > 28) {
+  iPhoneNotch = true;
 }
 
 export default {
